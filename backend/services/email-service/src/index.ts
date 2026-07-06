@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from './config';
 import otpRoutes from './routes/otp.routes';
 import { startKafkaConsumer } from './kafka/consumer';
+import { connectDatabase } from './db';
 
 const app = express();
 
@@ -15,7 +16,16 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/otp', otpRoutes);
 
-app.listen(config.port, () => {
-  console.log(`Email service running on http://localhost:${config.port}`);
-  startKafkaConsumer();
+async function main(): Promise<void> {
+  await connectDatabase();
+
+  app.listen(config.port, () => {
+    console.log(`Email service running on http://localhost:${config.port}`);
+    startKafkaConsumer();
+  });
+}
+
+main().catch((err) => {
+  console.error('Failed to start email service:', err);
+  process.exit(1);
 });

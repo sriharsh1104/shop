@@ -1,44 +1,53 @@
-import { v4 as uuidv4 } from 'uuid';
 import { User, SignupRequest } from '../types';
 import { hashPassword } from '../utils';
+import { IUserDoc, UserModel } from '../models/user.model';
 
-const users = new Map<string, User>();
+function toUser(doc: IUserDoc): User {
+  return {
+    id: doc._id.toString(),
+    email: doc.email,
+    username: doc.username,
+    phone: doc.phone,
+    passwordHash: doc.passwordHash,
+    isVerified: doc.isVerified,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
+  };
+}
 
 export const userStore = {
-  findByEmail(email: string): User | undefined {
-    return Array.from(users.values()).find((u) => u.email === email);
+  async findByEmail(email: string): Promise<User | null> {
+    const doc = await UserModel.findOne({ email: email.toLowerCase() });
+    return doc ? toUser(doc) : null;
   },
 
-  findByUsername(username: string): User | undefined {
-    return Array.from(users.values()).find((u) => u.username === username);
+  async findByUsername(username: string): Promise<User | null> {
+    const doc = await UserModel.findOne({ username });
+    return doc ? toUser(doc) : null;
   },
 
-  findById(id: string): User | undefined {
-    return users.get(id);
+  async findById(id: string): Promise<User | null> {
+    const doc = await UserModel.findById(id);
+    return doc ? toUser(doc) : null;
   },
 
   async create(data: SignupRequest): Promise<User> {
-    const now = new Date().toISOString();
-    const user: User = {
-      id: uuidv4(),
-      email: data.email,
+    const doc = await UserModel.create({
+      email: data.email.toLowerCase(),
       username: data.username,
       phone: data.phone,
       passwordHash: await hashPassword(data.password),
       isVerified: false,
-      createdAt: now,
-      updatedAt: now,
-    };
-    users.set(user.id, user);
-    return user;
+    });
+    return toUser(doc);
   },
 
-  markVerified(id: string): User | undefined {
-    const user = users.get(id);
-    if (!user) return undefined;
-    user.isVerified = true;
-    user.updatedAt = new Date().toISOString();
-    users.set(id, user);
-    return user;
+  async deleteById(id: string): Promise<void> {
+    await UserModel.findByIdAndDelete(id);
+  },
+
+  async markVerified(id: string): Promise<User | null> {
+    const doc = await UserModel.findByIdAndUpdate(id, { isVerified: true }, { new: true });
+    return doc ? toUser(doc) : null;
   },
 };

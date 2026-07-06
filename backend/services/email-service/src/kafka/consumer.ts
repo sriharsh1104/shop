@@ -1,6 +1,8 @@
 import { Kafka, Consumer } from 'kafkajs';
 import { config } from '../config';
-import { otpService, sendEmailNotification } from '../services/otp.service';
+import { otpService } from '../services/otp.service';
+import { sendEmail } from '../services/email.service';
+import { buildOtpEmail, buildOrderEmail } from '../templates/email.templates';
 import { retry } from '../utils/retry';
 
 export const TOPICS = {
@@ -25,27 +27,19 @@ let consumer: Consumer | null = null;
 
 async function handleOtpRequested(event: OtpRequestedEvent): Promise<void> {
   const { email, purpose } = event;
-  const { otp } = otpService.create(email, purpose);
+  const { otp } = await otpService.create(email, purpose);
+  const { subject, html, text } = buildOtpEmail(otp, purpose);
 
-  await sendEmailNotification(
-    email,
-    'Your Verification Code',
-    `Your OTP for ${purpose} is: ${otp}. It expires in 10 minutes.`
-  );
+  await sendEmail({ to: email, subject, html, text });
+  console.log(`OTP email sent for ${purpose} → ${email}`);
 }
 
 async function handleOrderPlaced(event: OrderPlacedEvent): Promise<void> {
   const { email, orderId, productName, quantity, totalPrice } = event;
+  const { subject, html, text } = buildOrderEmail(orderId, productName, quantity, totalPrice);
 
-  await sendEmailNotification(
-    email,
-    'Order Confirmation',
-    `Your order #${orderId.slice(0, 8)} has been placed!\n\n` +
-      `Product: ${productName}\n` +
-      `Quantity: ${quantity}\n` +
-      `Total: $${totalPrice.toFixed(2)}\n\n` +
-      `Thank you for shopping with us!`
-  );
+  await sendEmail({ to: email, subject, html, text });
+  console.log(`Order confirmation sent → ${email}`);
 }
 
 async function connectConsumer(): Promise<void> {

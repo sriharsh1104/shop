@@ -113,7 +113,7 @@ export default function OtpPage() {
         </p>
 
         <p className="dev-hint">
-          Check the email-service terminal for the OTP in development mode.
+          Check your inbox for the 6-digit verification code.
         </p>
       </form>
     </AuthLayout>

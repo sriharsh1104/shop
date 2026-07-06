@@ -8,4 +8,5 @@ export const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   emailServiceUrl: process.env.EMAIL_SERVICE_URL || 'http://localhost:3002',
   kafkaBrokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
+  mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27018/shop-users',
 };

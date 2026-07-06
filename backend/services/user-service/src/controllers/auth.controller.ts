@@ -8,12 +8,12 @@ import { AuthRequest } from '../middleware';
 export async function signup(req: AuthRequest, res: Response): Promise<void> {
   const data: SignupRequest = req.body;
 
-  if (userStore.findByEmail(data.email)) {
+  if (await userStore.findByEmail(data.email)) {
     res.status(409).json({ message: 'Email already registered' });
     return;
   }
 
-  if (userStore.findByUsername(data.username)) {
+  if (await userStore.findByUsername(data.username)) {
     res.status(409).json({ message: 'Username already taken' });
     return;
   }
@@ -22,9 +22,14 @@ export async function signup(req: AuthRequest, res: Response): Promise<void> {
 
   try {
     await sendOtp(user.email, 'signup');
-    console.log(`[DEV] OTP requested for ${user.email} — check email-service logs`);
+    console.log(`OTP requested for ${user.email} via Kafka`);
   } catch (err) {
     console.error('Failed to send OTP:', err);
+    await userStore.deleteById(user.id);
+    res.status(503).json({
+      message: 'Failed to send verification email. Is Kafka running? Try: docker compose up -d kafka',
+    });
+    return;
   }
 
   const token = generateToken({ userId: user.id, email: user.email });
@@ -40,7 +45,7 @@ export async function signup(req: AuthRequest, res: Response): Promise<void> {
 export async function login(req: AuthRequest, res: Response): Promise<void> {
   const { email, password }: LoginRequest = req.body;
 
-  const user = userStore.findByEmail(email);
+  const user = await userStore.findByEmail(email);
   if (!user || !(await comparePassword(password, user.passwordHash))) {
     res.status(401).json({ message: 'Invalid email or password' });
     return;
@@ -49,9 +54,10 @@ export async function login(req: AuthRequest, res: Response): Promise<void> {
   if (!user.isVerified) {
     try {
       await sendOtp(user.email, 'login');
-      console.log(`[DEV] OTP requested for ${user.email} — check email-service logs`);
     } catch (err) {
       console.error('Failed to send OTP:', err);
+      res.status(503).json({ message: 'Failed to send OTP. Please try again.' });
+      return;
     }
 
     const token = generateToken({ userId: user.id, email: user.email });
@@ -76,7 +82,7 @@ export async function verifyOtpHandler(req: AuthRequest, res: Response): Promise
   const { otp } = req.body;
   const userId = req.userId!;
 
-  const user = userStore.findById(userId);
+  const user = await userStore.findById(userId);
   if (!user) {
     res.status(404).json({ message: 'User not found' });
     return;
@@ -88,15 +94,20 @@ export async function verifyOtpHandler(req: AuthRequest, res: Response): Promise
     return;
   }
 
-  const updated = userStore.markVerified(userId)!;
+  const updated = await userStore.markVerified(userId);
+  if (!updated) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
   res.json({
-    message: 'Email verified successfully',
+    message: 'Email verified successfully. Registration complete.',
     user: sanitizeUser(updated),
   });
 }
 
 export async function resendOtp(req: AuthRequest, res: Response): Promise<void> {
-  const user = userStore.findById(req.userId!);
+  const user = await userStore.findById(req.userId!);
   if (!user) {
     res.status(404).json({ message: 'User not found' });
     return;
@@ -104,15 +115,14 @@ export async function resendOtp(req: AuthRequest, res: Response): Promise<void> 
 
   try {
     await sendOtp(user.email, 'resend');
-    console.log(`[DEV] OTP requested for ${user.email} — check email-service logs`);
     res.json({ message: 'OTP resent successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to resend OTP' });
+  } catch {
+    res.status(503).json({ message: 'Failed to resend OTP. Is Kafka running?' });
   }
 }
 
-export function getMe(req: AuthRequest, res: Response): void {
-  const user = userStore.findById(req.userId!);
+export async function getMe(req: AuthRequest, res: Response): Promise<void> {
+  const user = await userStore.findById(req.userId!);
   if (!user) {
     res.status(404).json({ message: 'User not found' });
     return;
