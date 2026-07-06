@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+// Server contract owned by product-service.
+package product;
+
+service ProductService {
+  rpc GetProduct (GetProductRequest) returns (ProductResponse);
+  rpc ReserveStock (ReserveStockRequest) returns (ReserveStockResponse);
+}
+
+message GetProductRequest {
+  string id = 1;
+}
+
+message ProductResponse {
+  string id = 1;
+  string name = 2;
+  double price = 3;
+  int32 stock = 4;
+  bool found = 5;
+}
+
+message ReserveStockRequest {
+  string product_id = 1;
+  int32 quantity = 2;
+}
+
+message ReserveStockResponse {
+  bool success = 1;
+  string message = 2;
+  int32 remaining_stock = 3;
+  string product_name = 4;
+  double price = 5;
+}
