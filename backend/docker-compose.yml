@@ -15,7 +15,7 @@ services:
       - --kafka-addr
       - internal://0.0.0.0:9092,external://0.0.0.0:19092
       - --advertise-kafka-addr
-      - internal://kafka:9092,external://localhost:19092
+      - internal://kafka:9092,external://localhost:9092
       - --mode
       - dev-container
     ports:
