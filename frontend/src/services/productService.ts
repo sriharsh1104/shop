@@ -13,4 +13,8 @@ export const productService = {
   getCategories() {
     return client.get<{ categories: string[] }>('/api/products/categories');
   },
+
+  getById(id: string) {
+    return client.get<{ product: Product }>(`/api/products/${id}`);
+  },
 };

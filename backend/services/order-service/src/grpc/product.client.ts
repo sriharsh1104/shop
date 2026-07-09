@@ -32,6 +32,23 @@ interface ReserveStockResponse {
   price: number;
 }
 
+interface ProductResponse {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  found: boolean;
+}
+
+export function getProduct(productId: string): Promise<ProductResponse> {
+  return new Promise((resolve, reject) => {
+    client.GetProduct({ id: productId }, (err: grpc.ServiceError | null, response: ProductResponse) => {
+      if (err) reject(err);
+      else resolve(response);
+    });
+  });
+}
+
 export function reserveStock(
   productId: string,
   quantity: number

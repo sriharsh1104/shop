@@ -7,7 +7,11 @@ export interface AuthRequest extends Request {
   userEmail?: string;
 }
 
-export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function authMiddleware(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
     res.status(401).json({ message: 'Authentication required' });
@@ -16,6 +20,15 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
 
   try {
     const payload = verifyToken(header.slice(7));
+    const user = await userStore.findById(payload.userId);
+    if (!user) {
+      res.status(401).json({ message: 'User not found' });
+      return;
+    }
+    if (user.tokenVersion !== (payload.tokenVersion ?? 0)) {
+      res.status(401).json({ message: 'Session expired. Please sign in again.' });
+      return;
+    }
     req.userId = payload.userId;
     req.userEmail = payload.email;
     next();

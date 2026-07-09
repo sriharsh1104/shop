@@ -2,7 +2,7 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { userService } from '../services';
 import { useAuth } from '../context/AuthContext';
-import { AuthLayout, Input, Button } from '../components/common/FormElements';
+import { AuthLayout, Input, PasswordInput, Button } from '../components/common/FormElements';
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -39,7 +39,7 @@ export default function SignupPage() {
       });
       if (res.token && res.user) {
         login(res.token, res.user);
-        navigate('/verify-otp');
+        navigate('/verify-otp', { state: { from: 'signup' } });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed');
@@ -49,7 +49,14 @@ export default function SignupPage() {
   };
 
   return (
-    <AuthLayout title="Create account" subtitle="Join Shop and start shopping">
+    <AuthLayout
+      title="Create account"
+      subtitle="Join Shop and start shopping"
+      showBack
+      onBack={() => navigate('/login')}
+      backLabel="Sign in"
+      step={{ current: 1, total: 2 }}
+    >
       <form onSubmit={handleSubmit} className="auth-form">
         {error && <div className="alert alert-error">{error}</div>}
 
@@ -83,9 +90,8 @@ export default function SignupPage() {
           autoComplete="tel"
         />
 
-        <Input
+        <PasswordInput
           label="Password"
-          type="password"
           value={form.password}
           onChange={update('password')}
           placeholder="Min. 6 characters"
@@ -94,9 +100,8 @@ export default function SignupPage() {
           autoComplete="new-password"
         />
 
-        <Input
+        <PasswordInput
           label="Confirm Password"
-          type="password"
           value={form.confirmPassword}
           onChange={update('confirmPassword')}
           placeholder="••••••••"

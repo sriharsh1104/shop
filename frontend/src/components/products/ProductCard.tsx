@@ -1,30 +1,17 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Product } from '../../types';
-import { orderService } from '../../services';
 
 export function ProductCard({
   product,
-  onPurchased,
 }: {
   product: Product;
   onPurchased?: () => void;
 }) {
-  const [buying, setBuying] = useState(false);
-  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
-  async function handleBuy() {
+  function handleBuy() {
     if (product.stock < 1) return;
-    setBuying(true);
-    setMessage('');
-    try {
-      const { message: successMsg } = await orderService.buy(product.id, 1);
-      setMessage(successMsg);
-      onPurchased?.();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Purchase failed');
-    } finally {
-      setBuying(false);
-    }
+    navigate(`/checkout?productId=${product.id}&qty=1`);
   }
 
   return (
@@ -41,16 +28,15 @@ export function ProductCard({
           <span className="product-stock">{product.stock} in stock</span>
         </div>
         <div className="product-footer">
-          <span className="product-price">${product.price.toFixed(2)}</span>
+          <span className="product-price">₹{product.price.toFixed(2)}</span>
           <button
             className="btn btn-primary btn-sm"
             onClick={handleBuy}
-            disabled={buying || product.stock < 1}
+            disabled={product.stock < 1}
           >
-            {buying ? 'Buying...' : product.stock < 1 ? 'Out of Stock' : 'Buy Now'}
+            {product.stock < 1 ? 'Out of Stock' : 'Buy Now'}
           </button>
         </div>
-        {message && <p className="product-buy-msg">{message}</p>}
       </div>
     </div>
   );
@@ -58,10 +44,8 @@ export function ProductCard({
 
 export function ProductGrid({
   products,
-  onPurchased,
 }: {
   products: Product[];
-  onPurchased?: () => void;
 }) {
   if (products.length === 0) {
     return <div className="empty-state">No products found.</div>;
@@ -70,7 +54,7 @@ export function ProductGrid({
   return (
     <div className="product-grid">
       {products.map((p) => (
-        <ProductCard key={p.id} product={p} onPurchased={onPurchased} />
+        <ProductCard key={p.id} product={p} />
       ))}
     </div>
   );

@@ -91,9 +91,31 @@ services:
       - PRODUCT_GRPC_URL=product-service:50051
       - KAFKA_BROKERS=kafka:9092
       - JWT_SECRET=dev-jwt-secret-change-in-production
+      - MONGODB_URI=mongodb://mongodb:27017/shop-orders
+      - USER_SERVICE_URL=http://user-service:3001
+      - INTERNAL_SECRET=dev-internal-secret
     depends_on:
       - product-service
       - kafka
+      - mongodb
+      - user-service
+
+  payment-service:
+    build: ./services/payment-service
+    ports:
+      - '3005:3005'
+    environment:
+      - PORT=3005
+      - MONGODB_URI=mongodb://mongodb:27017/shop-payments
+      - ORDER_SERVICE_URL=http://order-service:3004
+      - USER_SERVICE_URL=http://user-service:3001
+      - INTERNAL_SECRET=dev-internal-secret
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-}
+    depends_on:
+      - mongodb
+      - order-service
+      - user-service
 
 volumes:
   mongodb_data:

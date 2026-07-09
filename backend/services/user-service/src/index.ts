@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config';
 import authRoutes from './routes/auth.routes';
+import addressRoutes from './routes/address.routes';
+import internalRoutes from './routes/internal.routes';
 import { errorHandler } from './middleware';
 import { connectDatabase } from './db';
 
@@ -15,6 +17,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users/addresses', addressRoutes);
+app.use('/internal', internalRoutes);
 app.use(errorHandler);
 
 async function main(): Promise<void> {

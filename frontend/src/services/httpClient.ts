@@ -56,5 +56,14 @@ export function createServiceClient(baseUrl: string) {
 
     post: <T>(path: string, body?: unknown, auth = false) =>
       httpRequest<T>(url(path), { method: 'POST', body, auth }),
+
+    put: <T>(path: string, body?: unknown, auth = false) =>
+      httpRequest<T>(url(path), { method: 'PUT', body, auth }),
+
+    patch: <T>(path: string, body?: unknown, auth = false) =>
+      httpRequest<T>(url(path), { method: 'PATCH', body, auth }),
+
+    delete: <T>(path: string, auth = false) =>
+      httpRequest<T>(url(path), { method: 'DELETE', auth }),
   };
 }

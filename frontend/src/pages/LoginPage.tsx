@@ -2,7 +2,7 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { userService } from '../services';
 import { useAuth } from '../context/AuthContext';
-import { AuthLayout, Input, Button } from '../components/common/FormElements';
+import { AuthLayout, Input, PasswordInput, Button } from '../components/common/FormElements';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -21,7 +21,10 @@ export default function LoginPage() {
       const res = await userService.login({ email, password });
       if (res.token && res.user) {
         login(res.token, res.user);
-        navigate(res.requiresOtp ? '/verify-otp' : '/dashboard');
+        navigate(
+          res.requiresOtp ? '/verify-otp' : '/dashboard',
+          res.requiresOtp ? { state: { from: 'login' } } : undefined,
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -31,7 +34,14 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your account">
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to your account"
+      showBack
+      onBack={() => navigate(-1)}
+      backLabel="Back"
+      step={{ current: 1, total: 2 }}
+    >
       <form onSubmit={handleSubmit} className="auth-form">
         {error && <div className="alert alert-error">{error}</div>}
 
@@ -45,9 +55,8 @@ export default function LoginPage() {
           autoComplete="email"
         />
 
-        <Input
+        <PasswordInput
           label="Password"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"

@@ -25,13 +25,36 @@ interface OrderPlacedEvent {
 
 let consumer: Consumer | null = null;
 
+function logOtpToConsole(email: string, purpose: string, otp: string): void {
+  console.log('\n╔══════════════════════════════════════╗');
+  console.log(`║  OTP for ${purpose.padEnd(24)} ║`);
+  console.log('╠══════════════════════════════════════╣');
+  console.log(`║  Email: ${email.padEnd(27)} ║`);
+  console.log(`║  Code:  ${otp.padEnd(27)} ║`);
+  console.log('╚══════════════════════════════════════╝\n');
+}
+
 async function handleOtpRequested(event: OtpRequestedEvent): Promise<void> {
   const { email, purpose } = event;
   const { otp } = await otpService.create(email, purpose);
   const { subject, html, text } = buildOtpEmail(otp, purpose);
 
-  await sendEmail({ to: email, subject, html, text });
-  console.log(`OTP email sent for ${purpose} → ${email}`);
+  if (config.devLogOtp) {
+    logOtpToConsole(email, purpose, otp);
+  }
+
+  try {
+    await sendEmail({ to: email, subject, html, text });
+    console.log(`OTP email sent for ${purpose} → ${email}`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`Failed to send OTP email to ${email}: ${message}`);
+    if (config.devLogOtp) {
+      console.warn('[DEV] Email failed — use the OTP printed above to verify.');
+      return;
+    }
+    throw err;
+  }
 }
 
 async function handleOrderPlaced(event: OrderPlacedEvent): Promise<void> {

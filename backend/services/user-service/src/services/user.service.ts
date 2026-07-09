@@ -1,4 +1,4 @@
-import { User, SignupRequest } from '../types';
+import { User, SignupRequest, ProfileUpdate } from '../types';
 import { hashPassword } from '../utils';
 import { IUserDoc, UserModel } from '../models/user.model';
 
@@ -10,6 +10,7 @@ function toUser(doc: IUserDoc): User {
     phone: doc.phone,
     passwordHash: doc.passwordHash,
     isVerified: doc.isVerified,
+    tokenVersion: doc.tokenVersion ?? 0,
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };
@@ -48,6 +49,19 @@ export const userStore = {
 
   async markVerified(id: string): Promise<User | null> {
     const doc = await UserModel.findByIdAndUpdate(id, { isVerified: true }, { new: true });
+    return doc ? toUser(doc) : null;
+  },
+
+  async incrementTokenVersion(id: string): Promise<void> {
+    await UserModel.findByIdAndUpdate(id, { $inc: { tokenVersion: 1 } });
+  },
+
+  async updateProfile(id: string, data: ProfileUpdate): Promise<User | null> {
+    const doc = await UserModel.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true, runValidators: true }
+    );
     return doc ? toUser(doc) : null;
   },
 };

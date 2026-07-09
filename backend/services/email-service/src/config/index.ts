@@ -9,4 +9,5 @@ export const config = {
   mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27018/shop-emails',
   resendApiKey: process.env.RESEND_API_KEY || '',
   fromEmail: process.env.FROM_EMAIL || 'Shop <onboarding@resend.dev>',
+  devLogOtp: process.env.DEV_LOG_OTP !== 'false',
 };

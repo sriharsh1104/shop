@@ -7,7 +7,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (token: string, user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   setUser: (user: User) => void;
 }
 
@@ -39,10 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserState(newUser);
   };
 
-  const logout = () => {
-    clearAuthToken();
-    setToken(null);
-    setUserState(null);
+  const logout = async () => {
+    try {
+      if (getAuthToken()) {
+        await userService.logout();
+      }
+    } catch {
+      // Clear local session even if API fails
+    } finally {
+      clearAuthToken();
+      setToken(null);
+      setUserState(null);
+    }
   };
 
   const setUser = (updated: User) => setUserState(updated);

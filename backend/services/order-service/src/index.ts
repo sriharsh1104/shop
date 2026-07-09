@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from './config';
 import orderRoutes from './routes/order.routes';
 import { errorHandler } from './middleware';
+import { connectDatabase } from './db';
 
 const app = express();
 
@@ -17,6 +18,14 @@ app.use('/api/orders', orderRoutes);
 
 app.use(errorHandler);
 
-app.listen(config.port, () => {
-  console.log(`Order service running on http://localhost:${config.port}`);
+async function main(): Promise<void> {
+  await connectDatabase();
+  app.listen(config.port, () => {
+    console.log(`Order service running on http://localhost:${config.port}`);
+  });
+}
+
+main().catch((err) => {
+  console.error('Failed to start order service:', err);
+  process.exit(1);
 });

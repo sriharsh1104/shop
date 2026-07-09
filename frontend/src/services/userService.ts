@@ -13,6 +13,10 @@ export const userService = {
     return client.post<AuthResponse>('/api/auth/login', data);
   },
 
+  logout() {
+    return client.post<{ message: string }>('/api/auth/logout', undefined, true);
+  },
+
   verifyOtp(otp: string) {
     return client.post<{ message: string; user: User }>('/api/auth/verify-otp', { otp }, true);
   },
@@ -23,5 +27,9 @@ export const userService = {
 
   getMe() {
     return client.get<{ user: User }>('/api/auth/me', true);
+  },
+
+  updateProfile(data: { username?: string; phone?: string }) {
+    return client.patch<{ message: string; user: User }>('/api/auth/profile', data, true);
   },
 };

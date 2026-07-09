@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { productService } from '../services';
 import { Product } from '../types';
+import { AppHeader } from '../components/common/AppHeader';
 import { ProductGrid } from '../components/products/ProductCard';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState('');
@@ -26,27 +25,9 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, [activeCategory]);
 
-  function refreshProducts() {
-    productService
-      .getAll(activeCategory || undefined)
-      .then(({ products }) => setProducts(products))
-      .catch((err) => setError(err.message));
-  }
-
   return (
     <div className="dashboard">
-      <header className="dashboard-header">
-        <div className="header-left">
-          <span className="logo">Shop</span>
-          <span className="header-greeting">Hello, {user?.username}</span>
-        </div>
-        <div className="header-right">
-          <span className="user-email">{user?.email}</span>
-          <button className="btn btn-ghost btn-sm" onClick={logout}>
-            Logout
-          </button>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="dashboard-main">
         <div className="dashboard-hero">
@@ -80,7 +61,7 @@ export default function DashboardPage() {
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        {!loading && !error && <ProductGrid products={products} onPurchased={refreshProducts} />}
+        {!loading && !error && <ProductGrid products={products} />}
       </main>
     </div>
   );

@@ -6,6 +6,7 @@ export interface IUserDoc extends Document {
   phone: string;
   passwordHash: string;
   isVerified: boolean;
+  tokenVersion: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const userSchema = new Schema<IUserDoc>(
     phone: { type: String, required: true, trim: true },
     passwordHash: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
